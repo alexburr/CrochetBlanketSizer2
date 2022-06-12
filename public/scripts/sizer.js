@@ -46,7 +46,7 @@ class ClipboardCopier {
 
         while (i < colors.length) {
             const color = colors[i];
-            this.textToCopy += color.displayName + "\n" + color.numberSmall + " small\t" + color.numberLarge + " large\n\n";
+            this.textToCopy += color.displayName + "\n" + color.numberSmall + " small\t" + color.numberLarge + " large\t" + color.numberFull + " square\n\n";
             i++;
         }
     }
@@ -65,13 +65,21 @@ class SizeManager {
         this.numberOfColumns = numberOfColumns;
     }
 
-    getRandomSize() {        
-        let smallSize = (Math.random() < globals.smallProbability);
-        let size = smallSize ? "small" : "large";
-        return size;
+    getRandomSize() {
+        let rand = Math.random();
+        if (rand < globals.smallProbability) {
+            return "small";
+        }
+        if (rand > globals.smallProbability && rand < globals.largeProbability) {
+            return "large";
+        }
+        else {
+            return "full"; 
+        }
     }
 
     checkRandomSize(blanketCircles, size) {
+        /* TODO : Fix this to account for "full" size */
         if (size == "large" && blanketCircles.length > 0) {
             let index = blanketCircles.length;
             if (blanketCircles[index - 1].size == "large") { size = "small"; }
@@ -199,16 +207,17 @@ const globals = {
     downloadButtonDivId: "downloadButtonContainer",
     exportContainerDivId: "exportContainer",
     rowsDefault: 12,
-    smallProbability: .4,
+    smallProbability: .33,
+    largeProbability: .66,
     squareColor: { name: "duckEgg", value: "178, 198, 197", displayName: "Duck Egg" },
     colors: [
-        { name: "cream", value: "237, 236, 232", displayName: "Cream", numberSmall: 0, numberLarge: 0 },
-        { name: "petrol", value: "12, 67, 92", displayName: "Petrol", numberSmall: 0, numberLarge: 0 },
-        { name: "tomato", value: "140, 16, 16", displayName: "Tomato", numberSmall: 0, numberLarge: 0 },
-        { name: "graphite", value: "33, 33, 33", displayName: "Graphite", numberSmall: 0, numberLarge: 0 },
-        { name: "teal", value: "15, 128, 118", displayName: "Teal", numberSmall: 0, numberLarge: 0 },
-        { name: "daffodil", value: "251, 250, 150", displayName: "Daffodil", numberSmall: 0, numberLarge: 0 },        
-        { name: "saffron", value: "247, 165, 87", displayName: "Saffron", numberSmall: 0, numberLarge: 0 }
+        { name: "cream", value: "237, 236, 232", displayName: "Cream", numberSmall: 0, numberLarge: 0, numberFull: 0 },
+        { name: "petrol", value: "12, 67, 92", displayName: "Petrol", numberSmall: 0, numberLarge: 0, numberFull: 0 },
+        { name: "tomato", value: "140, 16, 16", displayName: "Tomato", numberSmall: 0, numberLarge: 0, numberFull: 0 },
+        { name: "graphite", value: "33, 33, 33", displayName: "Graphite", numberSmall: 0, numberLarge: 0, numberFull: 0 },
+        { name: "teal", value: "15, 128, 118", displayName: "Teal", numberSmall: 0, numberLarge: 0, numberFull: 0 },
+        { name: "daffodil", value: "251, 250, 150", displayName: "Daffodil", numberSmall: 0, numberLarge: 0, numberFull: 0 },        
+        { name: "saffron", value: "247, 165, 87", displayName: "Saffron", numberSmall: 0, numberLarge: 0, numberFull: 0 }
     ]
 };
 
@@ -221,7 +230,7 @@ var ColorEntry = React.createClass({
             <ul className="list-unstyled">
                 <li>
                     <b>{this.props.displayName}</b><br />
-                    Small: {this.props.numberSmall}, Large: {this.props.numberLarge}
+                    Small: {this.props.numberSmall}, Large: {this.props.numberLarge}, Square: {this.props.numberFull}
                 </li>
             </ul>
         )
@@ -236,15 +245,17 @@ var ColorList = React.createClass({
         while (i < colors.length) {
             let color = colors[i];
             let j = 0;
-            let colorCount = { name: color.name, displayName: color.displayName, smallSize: 0, largeSize: 0 };
+            let colorCount = { name: color.name, displayName: color.displayName, smallSize: 0, largeSize: 0, fullSize: 0 };
 
             while (j < circles.length) {
                 let circle = circles[j];
                 if (circle.color.name == colorCount.name) {
                     if (circle.size === "small") {
                         colorCount.smallSize++;
-                    } else {
+                    } else if (circle.size === "large") {
                         colorCount.largeSize++;
+                    } else {
+                        colorCount.fullSize++;
                     }
                 }
 
@@ -266,7 +277,8 @@ var ColorList = React.createClass({
                 key={i} 
                 displayName={colorCounts[i].displayName} 
                 numberSmall={colorCounts[i].smallSize} 
-                numberLarge={colorCounts[i].largeSize} />
+                numberLarge={colorCounts[i].largeSize} 
+                numberFull={colorCounts[i].fullSize} />
             );
             i++;
         }
@@ -316,7 +328,20 @@ var BlanketCircle = React.createClass({
     handleClick(e) {
         if (e.shiftKey || e.ctrlKey) {
             //console.log('will change', this.state.size);
-            let newSize = (this.state.size == "small") ? "large" : "small";
+            let newSize = this.state.size;
+            switch (this.state.size) {
+                case "small": 
+                    newSize = "large";
+                    break;
+                case "large":
+                    newSize = "full";
+                    break;
+                default:
+                    newSize = "small";
+                    break;
+            }
+
+            //let newSize = (this.state.size == "small") ? "large" : "small";
             let blanketCircleObject = blanketData.updateCircleSize(this.state.id, newSize);
             this.setState({
                 size: newSize,

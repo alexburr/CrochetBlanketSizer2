@@ -38,5 +38,10 @@
     height: .8em; 
     width: .8em; 
 }
+.blanket-circle.full { 
+    border-radius: 0;
+    height: 1.5em;
+    width: 1.5em; 
+}
 
 .hidden { display: none; }

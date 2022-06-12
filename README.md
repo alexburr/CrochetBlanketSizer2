@@ -1,4 +1,4 @@
-# Crochet Blanket Sizer #
+# Crochet Blanket Sizer 2 #
 
 For Sarah.
 
